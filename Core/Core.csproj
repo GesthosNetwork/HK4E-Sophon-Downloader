@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Sophon.Downloader</AssemblyName>
+    <Version>2.0</Version>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishDir>..\bin\</PublishDir>
+    <DebugType>none</DebugType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);4014,8602,8603,8604,8618</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mono.Options" Version="6.12.0.148" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sophon\Sophon.csproj" />
+  </ItemGroup>
+
+  <Target Name="PostPublishCleanup" AfterTargets="Publish">
+    <ItemGroup>
+      <LibFiles Include="$(ProjectDir)bin\Release\net9.0\win-x64\Lib\win-x64\**\*.*" />
+      <PdbToDelete Include="$(PublishDir)**\*.pdb" />
+    </ItemGroup>
+
+    <MakeDir Directories="$(ProjectDir)..\bin\Lib\win-x64" />
+
+    <Copy
+      SourceFiles="@(LibFiles)"
+      DestinationFiles="@(LibFiles->'$(ProjectDir)..\bin\Lib\win-x64\%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"
+      OverwriteReadOnlyFiles="true" />
+
+    <Delete Files="@(PdbToDelete)" />
+
+    <RemoveDir Directories="$(ProjectDir)bin;$(ProjectDir)obj;$(ProjectDir)..\Sophon\bin;$(ProjectDir)..\Sophon\obj" />
+  </Target>
+
+</Project>

@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Platforms>x64</Platforms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>NOSTREAMLOCK</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.31.1" />
+    <PackageReference Include="Google.Protobuf.Tools" Version="3.31.1" />
+    <PackageReference Include="Hi3Helper.ZstdNet" Version="1.6.4" />
+    <PackageReference Include="SharpHDiffPatch.Core" Version="2.3.3" />
+    <PackageReference Include="System.IO.Hashing" Version="9.0.6" />
+  </ItemGroup>
+
+  <Target Name="GenerateProtos" BeforeTargets="CoreCompile">
+    <Message Text="Generating .proto C# files..." Importance="high" />
+    <Exec Command="&quot;$(NugetPackageRoot)\google.protobuf.tools\3.31.1\tools\windows_x64\protoc.exe&quot; --proto_path=&quot;$(ProjectDir)Protos&quot; --csharp_out=&quot;$(ProjectDir)Protos&quot; &quot;$(ProjectDir)Protos\*.proto&quot;" />
+  </Target>
+
+</Project>
