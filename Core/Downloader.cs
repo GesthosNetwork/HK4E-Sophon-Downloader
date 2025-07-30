@@ -90,7 +90,7 @@ namespace Core
                 }
 
                 long currentRead = 0;
-                Task.Run(() => AppExitTrigger(tokenSource));
+                Task exitTask = Task.Run(() => AppExitTrigger(tokenSource));
 
                 var stopwatch = Stopwatch.StartNew();
 
@@ -153,6 +153,7 @@ namespace Core
                 finally
                 {
                     stopwatch.Stop();
+                    await exitTask;
                 }
             }
 

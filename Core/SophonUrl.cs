@@ -11,42 +11,42 @@ namespace Core
     public class BranchesRoot
     {
         public int retcode { get; set; }
-        public string message { get; set; }
-        public BranchesData data { get; set; }
+        public string? message { get; set; }
+        public BranchesData? data { get; set; }
     }
 
     public class BranchesData
     {
-        public List<BranchesGameBranch> game_branches { get; set; }
+        public List<BranchesGameBranch>? game_branches { get; set; }
     }
 
     public class BranchesGameBranch
     {
-        public BranchesGame game { get; set; }
-        public BranchesMain main { get; set; }
-        public BranchesMain pre_download { get; set; }
+        public BranchesGame? game { get; set; }
+        public BranchesMain? main { get; set; }
+        public BranchesMain? pre_download { get; set; }
     }
 
     public class BranchesGame
     {
-        public string id { get; set; }
-        public string biz { get; set; }
+        public string? id { get; set; }
+        public string? biz { get; set; }
     }
 
     public class BranchesMain
     {
-        public string package_id { get; set; }
-        public string branch { get; set; }
-        public string password { get; set; }
-        public string tag { get; set; }
-        public List<string> diff_tags { get; set; }
-        public List<BranchesCategory> categories { get; set; }
+        public string? package_id { get; set; }
+        public string? branch { get; set; }
+        public string? password { get; set; }
+        public string? tag { get; set; }
+        public List<string>? diff_tags { get; set; }
+        public List<BranchesCategory>? categories { get; set; }
     }
 
     public class BranchesCategory
     {
-        public string category_id { get; set; }
-        public string matching_field { get; set; }
+        public string? category_id { get; set; }
+        public string? matching_field { get; set; }
     }
 
     public enum Region
@@ -63,12 +63,12 @@ namespace Core
 
     public class SophonUrl
     {
-        private string apiBase { get; set; }
-        private string sophonBase { get; set; }
-        private string gameId { get; set; }
+        private string apiBase { get; set; } = "";
+        private string sophonBase { get; set; } = "";
+        private string gameId { get; set; } = "";
         private BranchType branch { get; set; }
-        private string launcherId { get; set; }
-        private string platApp { get; set; }
+        private string launcherId { get; set; } = "";
+        private string platApp { get; set; } = "";
         private string gameBiz { get; set; } = "";
         private string packageId { get; set; } = "";
         private string password { get; set; } = "";
@@ -122,12 +122,12 @@ namespace Core
             gameBiz = data[1];
             packageId = data[2];
             password = data[3];
-            branchBackup = obj;
+            branchBackup = obj!;
 
             return 0;
         }
 
-        private string[] ParseBuildData(BranchesRoot obj, BranchType searchBranch)
+        private string[] ParseBuildData(BranchesRoot? obj, BranchType searchBranch)
         {
             if (obj == null || obj.retcode != 0 || obj.message != "OK")
                 return new[] { "ERROR", obj?.message ?? "Unknown error" };
@@ -137,7 +137,7 @@ namespace Core
                 return new[] { "ERROR", $"Branch {searchBranch} not found" };
 
             var gameObj = GetBranchGame(obj);
-            return new[] { "OK", gameObj.biz, branchObj.package_id, branchObj.password };
+            return new[] { "OK", gameObj?.biz ?? "", branchObj.package_id ?? "", branchObj.password ?? "" };
         }
 
         public string GetBuildUrl(string version, bool isUpdate = false)
@@ -161,12 +161,12 @@ namespace Core
             return await client.GetStringAsync(url);
         }
 
-        private static BranchesGame GetBranchGame(BranchesRoot obj)
+        private static BranchesGame? GetBranchGame(BranchesRoot obj)
         {
             return obj.data?.game_branches?.FirstOrDefault()?.game;
         }
 
-        private static BranchesMain GetBranch(BranchesRoot obj, BranchType searchBranch)
+        private static BranchesMain? GetBranch(BranchesRoot obj, BranchType searchBranch)
         {
             var branchObj = obj.data?.game_branches?.FirstOrDefault();
             return searchBranch switch

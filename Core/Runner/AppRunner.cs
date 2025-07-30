@@ -1,5 +1,5 @@
-using System.Reflection;
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Core.Runner
@@ -11,8 +11,13 @@ namespace Core.Runner
             Core.Utils.WindowUtils.CenterConsole();
 
             _ = AppConfig.Config;
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
-            Console.Title = $"HK4E Sophon Downloader v{version?.Major}.{version?.Minor}";
+
+            var version = Assembly
+                .GetExecutingAssembly()
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                .InformationalVersion ?? "unknown";
+
+            Console.Title = $"HK4E Sophon Downloader v{version}";
 
             if (args.Length == 0)
                 return await MenuUI.RunInteractiveMenu();

@@ -21,9 +21,6 @@ This tool aims to bypass that limitation, so you can download directly, efficien
 
 - Install [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
 
-> 💀 .NET 9.0 SDK already exists. Only **retards** are still stuck with .NET 8.0,  
-> and only **goblins** are still using .NET 7.0 or below. Evolve.
-
 
 ## Compile Instructions
 
@@ -63,7 +60,7 @@ Sophon.Downloader.exe update <gameId> <package> <fromVer> <toVer> <outputDir> [o
 
 ```cmd
 Sophon.Downloader.exe full gopR6Cufr3 game 5.7 Downloads
-Sophon.Downloader.exe update gopR6Cufr3 en-us 5.6 5.7 Downloads --threads=4 --handles=64
+Sophon.Downloader.exe update gopR6Cufr3 en-us 5.6 5.7 Downloads --threads=4 --handles=128
 ```
 
 
@@ -86,8 +83,7 @@ Sophon.Downloader.exe update gopR6Cufr3 en-us 5.6 5.7 Downloads --threads=4 --ha
 
 ## config.json
 
-This file is auto-generated if not found.  
-You can customize the default region, versions, and more.
+This file is auto-generated if not found. You can customize the default region and add more versions.
 
 Example:
 
@@ -97,15 +93,17 @@ Example:
   "Branch": "main",
   "LauncherId": "VYTpXlbWo8",
   "PlatApp": "ddxf6vlr1reo",
-  "Threads": 8,
+  "Threads": 4,
   "MaxHttpHandle": 128,
   "Silent": false,
   "Versions": {
-    "full": ["5.6", "5.7"],
+    "full": ["5.6", "5.7", "5.8"],
     "update": [
       ["5.5", "5.6"],
-	  ["5.5", "5.7"],
-      ["5.6", "5.7"]
+      ["5.5", "5.7"],
+      ["5.6", "5.7"],
+      ["5.6", "5.8"],
+      ["5.7", "5.8"]
     ]
   }
 }
@@ -114,16 +112,15 @@ Example:
 
 ## Notes
 
-- If you mess up the config, the app will silently fallback to default values — no mercy.
+- If you mess up the config, the app will silently fallback to default values.
 - Garbage values like `"Silent": lmao` or `"Threads": 99999` **Silently fixed automatically.**
 - Version/tag values are validated **live via the API**, not by regex.
   If your version doesn't exist, you'll get a clean `[ERROR] Failed to fetch manifest` — no crash.
-- Maximum thread count = your CPU core count (capped automatically).
-- This tool is intended for **educational and preservation purposes only.**  
-  This is not affiliated with Hoyoverse. Use at your own risk.
+- Maximum thread count = your CPU core count.
 
 
-## License
+## Disclaimer
 
-Do whatever you want.  
-💀 Just don’t sell it as your own, clown.
+This tool is for reverse engineering & educational use only.  
+Not affiliated with miHoYo, Cognosphere, or any official entity.  
+Do not use this project for public distribution or commercial purposes.

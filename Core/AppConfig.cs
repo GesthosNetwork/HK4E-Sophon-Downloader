@@ -13,7 +13,7 @@ namespace Core
         public string Branch { get; set; } = "main";
         public string LauncherId { get; set; } = "VYTpXlbWo8";
         public string PlatApp { get; set; } = "ddxf6vlr1reo";
-        public int Threads { get; set; } = Environment.ProcessorCount;
+        public int Threads { get; set; } = Math.Max(1, Environment.ProcessorCount / 2);
         public int MaxHttpHandle { get; set; } = 128;
         public bool Silent { get; set; } = false;
         public VersionsConfig Versions { get; set; }
@@ -31,12 +31,14 @@ namespace Core
             if (!File.Exists(ConfigPath))
             {
                 var defaultConfig = new AppConfig();
-                defaultConfig.Versions.Full = new() { "5.6", "5.7" };
+                defaultConfig.Versions.Full = new() { "5.6", "5.7", "5.8" };
                 defaultConfig.Versions.Update = new()
                 {
                     new() { "5.5", "5.6" },
                     new() { "5.5", "5.7" },
-                    new() { "5.6", "5.7" }
+                    new() { "5.6", "5.7" },
+                    new() { "5.6", "5.8" },
+                    new() { "5.7", "5.8" }
                 };
                 defaultConfig.Save();
                 Console.WriteLine("[INFO] config.json not found. Created default config.");
@@ -74,7 +76,7 @@ namespace Core
                 {
                     config.Threads = threadsVal > 0 && threadsVal <= Environment.ProcessorCount
                         ? threadsVal
-                        : Environment.ProcessorCount;
+                        : Math.Max(1, Environment.ProcessorCount / 2);
                 }
 
                 if (root.TryGetProperty("MaxHttpHandle", out var handleProp) && handleProp.TryGetInt32(out int handlesVal))

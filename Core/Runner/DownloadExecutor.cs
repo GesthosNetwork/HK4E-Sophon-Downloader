@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace Core.Runner
 {
@@ -28,10 +29,33 @@ namespace Core.Runner
             SophonUrl url = new(region, game.GetGameId(), branch, AppConfig.Config.LauncherId, AppConfig.Config.PlatApp);
 
             if (updateFrom.Count(c => c == '.') == 1) updateFrom += ".0";
+
             if (!AppConfig.Config.Silent)
                 Console.WriteLine("[INFO] Initializing region, branch, and game info...");
 
-            await url.GetBuildData();
+            try
+            {
+                await url.GetBuildData();
+            }
+            catch (HttpRequestException)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("[ERROR] Unable to connect to the internet.");
+                Console.ResetColor();
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey();
+                return;
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"[ERROR] Unexpected error: {ex.Message}");
+                Console.ResetColor();
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey();
+                return;
+            }
+
             string prevManifest = url.GetBuildUrl(updateFrom, false);
             string newManifest = "";
 
