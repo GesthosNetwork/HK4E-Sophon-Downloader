@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Platforms>x64</Platforms>
     <Version>2.0.3</Version>
-	<Copyright>GesthosNetwork © 2025 All rights reserved.</Copyright>
+	<Copyright>GesthosNetwork © 2026 All rights reserved.</Copyright>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>NOSTREAMLOCK</DefineConstants>
   </PropertyGroup>

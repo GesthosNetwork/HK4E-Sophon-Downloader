@@ -7,7 +7,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <Version>2.0.4</Version>
-	<Copyright>GesthosNetwork © 2025 All rights reserved.</Copyright>
+	<Copyright>GesthosNetwork © 2026 All rights reserved.</Copyright>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <PublishTrimmed>false</PublishTrimmed>
