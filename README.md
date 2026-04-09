@@ -19,7 +19,7 @@ This tool aims to bypass that limitation, so you can download directly, efficien
 
 ## Requirements
 
-- Install [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- Install [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 
 ## Compile Instructions
@@ -59,8 +59,8 @@ Sophon.Downloader.exe update <gameId> <package> <fromVer> <toVer> <outputDir> [o
 #### Example:
 
 ```cmd
-Sophon.Downloader.exe full gopR6Cufr3 game 6.0 Downloads
-Sophon.Downloader.exe update gopR6Cufr3 en-us 6.0 6.1 Downloads --predownload --OSREL --threads=2 --handles=64
+Sophon.Downloader.exe full gopR6Cufr3 game 6.5 Downloads
+Sophon.Downloader.exe update gopR6Cufr3 en-us 6.4 6.5 Downloads --predownload --OSREL --threads=2 --handles=64
 ```
 
 
@@ -98,20 +98,17 @@ Example:
   "MaxHttpHandle": 128,
   "Silent": false,
   "Versions": {
-    "full": ["5.6", "5.7", "5.8", "6.0", "6.1"],
+    "full": ["6.0", "6.1", "6.2", "6.3", "6.4", "6.5"],
     "update": [
-      ["5.5", "5.6"],
-      ["5.5", "5.7"],
-      ["5.6", "5.7"],
-      ["5.6", "5.8"],
-      ["5.7", "5.8"],
-      ["5.7", "6.0"],
-      ["5.8", "6.0"],
-      ["5.8", "6.1"],
-      ["6.0", "6.1"]
+      ["6.0", "6.1"],
+      ["6.1", "6.2"],
+      ["6.2", "6.3"],
+      ["6.3", "6.4"],
+      ["6.4", "6.5"]
     ]
   }
 }
+
 ```
 
 
@@ -129,3 +126,10 @@ Example:
 This tool is for reverse engineering & educational use only.  
 Not affiliated with miHoYo, Cognosphere, or any official entity.  
 Do not use this project for public distribution or commercial purposes.
+
+
+## Credits
+
+This project is based on [SophonDownloader](https://github.com/Escartem/SophonDownloader)  
+This project also includes plugins and assets from [Hi3Helper.Sophon](https://github.com/CollapseLauncher/Hi3Helper.Sophon)  
+Major modifications and development by [GesthosNetwork](https://github.com/GesthosNetwork)

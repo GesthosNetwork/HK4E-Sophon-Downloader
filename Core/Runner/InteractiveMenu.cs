@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace Core.Runner
 {
@@ -68,7 +69,9 @@ namespace Core.Runner
                 for (int i = 0; i < versions.Length; i++)
                 {
                     var v = versions[i];
-                    string label = mode == "full" ? $"Version {v[0]}" : $"From {v[0]} → {v[1]}";
+                    string label = mode == "full"
+                        ? $"Version {v[0]}"
+                        : $"From {v[0]} → {v[1]}";
                     Console.WriteLine($"[{i + 1}] {label}");
                 }
 
@@ -80,19 +83,73 @@ namespace Core.Runner
 
                 if (int.TryParse(input, out int choice) && choice >= 1 && choice <= versions.Length)
                 {
-                    string[] ver = versions[choice - 1];
-                    string[] argsToRun = mode == "full"
-                        ? new[] { "full", gameId, lang, ver[0], "Downloads" }
-                        : new[] { "update", gameId, lang, ver[0], ver[1], "Downloads" };
+                    string[] verRaw = versions[choice - 1];
 
-                    Console.Clear();
-                    Console.WriteLine($"Executing:\nSophon.Downloader.exe {string.Join(" ", argsToRun)}\n");
+                    string v1 = NormalizeVersion(verRaw[0]);
 
-                    await DownloadExecutor.RunDownload(argsToRun);
+                    string outputSubDir;
+                    string outputDir;
+
+                    if (mode == "full")
+                    {
+                        outputSubDir = $"{lang}_{v1}";
+                        outputDir = Path.Combine("Downloads", outputSubDir);
+
+                        string[] argsToRun = new[]
+                        {
+                            "full",
+                            gameId,
+                            lang,
+                            v1,
+                            outputDir
+                        };
+
+                        Console.Clear();
+                        Console.WriteLine($"Executing:\nSophon.Downloader.exe {string.Join(" ", argsToRun)}\n");
+
+                        await DownloadExecutor.RunDownload(argsToRun);
+                    }
+                    else
+                    {
+                        string v2 = NormalizeVersion(verRaw[1]);
+
+                        outputSubDir = $"{lang}_{v1}_{v2}_diff";
+                        outputDir = Path.Combine("Downloads", outputSubDir);
+
+                        string[] argsToRun = new[]
+                        {
+                            "update",
+                            gameId,
+                            lang,
+                            v1,
+                            v2,
+                            outputDir
+                        };
+
+                        Console.Clear();
+                        Console.WriteLine($"Executing:\nSophon.Downloader.exe {string.Join(" ", argsToRun)}\n");
+
+                        await DownloadExecutor.RunDownload(argsToRun);
+                    }
+
                     Console.WriteLine("\nPress any key to return...");
                     Console.ReadKey();
                 }
             }
+        }
+
+        private static string NormalizeVersion(string version)
+        {
+            if (string.IsNullOrWhiteSpace(version))
+                return string.Empty;
+
+            var parts = version.Split('.');
+            if (parts.Length == 1)
+                return $"{parts[0]}.0.0";
+            if (parts.Length == 2)
+                return $"{parts[0]}.{parts[1]}.0";
+
+            return version;
         }
     }
 }

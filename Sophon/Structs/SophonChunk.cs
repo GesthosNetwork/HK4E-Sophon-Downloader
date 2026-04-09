@@ -1,4 +1,4 @@
-﻿namespace Sophon.Structs
+namespace Sophon.Structs
 {
     public struct SophonChunk
     {

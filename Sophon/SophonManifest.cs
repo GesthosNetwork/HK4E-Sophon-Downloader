@@ -1,4 +1,4 @@
-﻿using Sophon.Helper;
+using Sophon.Helper;
 using Sophon.Infos;
 using Sophon.Protos;
 using Sophon.Structs;

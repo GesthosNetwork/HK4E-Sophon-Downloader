@@ -1,12 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>Sophon.Downloader</AssemblyName>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <Version>2.0.4</Version>
+    <Version>2.1.0</Version>
 	<Copyright>GesthosNetwork © 2026 All rights reserved.</Copyright>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
@@ -27,7 +27,7 @@
 
   <Target Name="PostPublishCleanup" AfterTargets="Publish">
     <ItemGroup>
-      <LibFiles Include="$(ProjectDir)bin\Release\net9.0\win-x64\Lib\win-x64\**\*.*" />
+      <LibFiles Include="$(ProjectDir)bin\Release\net10.0\win-x64\Lib\win-x64\**\*.*" />
       <PdbToDelete Include="$(PublishDir)**\*.pdb" />
     </ItemGroup>
 

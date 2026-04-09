@@ -1,4 +1,4 @@
-﻿using Sophon.Structs;
+using Sophon.Structs;
 using System;
 using System.Collections.Generic;
 using System.IO;

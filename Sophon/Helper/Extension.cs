@@ -1,4 +1,4 @@
-﻿using Google.Protobuf;
+using Google.Protobuf;
 using Sophon.Infos;
 using Sophon.Structs;
 using System;

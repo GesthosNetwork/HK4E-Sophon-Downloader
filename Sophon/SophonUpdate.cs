@@ -1,4 +1,4 @@
-﻿﻿using Google.Protobuf.Collections;
+using Google.Protobuf.Collections;
 using Sophon.Helper;
 using Sophon.Infos;
 using Sophon.Protos;

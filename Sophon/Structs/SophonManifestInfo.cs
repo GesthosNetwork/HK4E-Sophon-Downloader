@@ -1,4 +1,4 @@
-﻿using Sophon.Infos;
+using Sophon.Infos;
 
 namespace Sophon.Infos
 {

@@ -19,7 +19,7 @@ namespace Core.Runner
 
             if (!AppConfig.Config.Silent)
             {
-                string encoded = "SEs0RSBTb3Bob24gRG93bmxvYWRlciBDb3B5cmlnaHQgKEMpIDIwMjUgR2VzdGhvc05ldHdvcms=";
+                string encoded = "SEs0RSBTb3Bob24gRG93bmxvYWRlciBDb3B5cmlnaHQgKEMpIDIwMjYgR2VzdGhvc05ldHdvcms=";
                 Console.WriteLine(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
             }
 
