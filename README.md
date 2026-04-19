@@ -15,11 +15,12 @@ This tool aims to bypass that limitation, so you can download directly, efficien
 - Built-in auto validation via real-time API
 - Fast, parallel downloads (multi-threaded)
 - Zero dependencies
+- Highly suitable for users who want to downgrade game versions for purposes such as data mining, asset management, or private server usage
 
 
 ## Requirements
 
-- Install [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- Install <i>[.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)</i>
 
 
 ## Compile Instructions
@@ -34,7 +35,7 @@ To compile the project:
 
 ### Option 1: Interactive Menu (Recommended)
 
-Just click Sophon.Downloader.exe
+Just click <i>**Sophon.Downloader.exe**</i>  
 You’ll be greeted with:
 
 ```
@@ -49,7 +50,7 @@ Navigate with number keys, follow the prompts, and you're good.
 It will auto-detect language options and available versions from your config.
 
 
-### Option 2: CLI Mode (Advanced Users)
+### Option 2: CLI Usage (Advanced Users)
 
 ```cmd
 Sophon.Downloader.exe full   <gameId> <package> <version> <outputDir> [options]
@@ -58,9 +59,16 @@ Sophon.Downloader.exe update <gameId> <package> <fromVer> <toVer> <outputDir> [o
 
 #### Example:
 
-```cmd
-Sophon.Downloader.exe full gopR6Cufr3 game 6.5 Downloads
-Sophon.Downloader.exe update gopR6Cufr3 en-us 6.4 6.5 Downloads --predownload --OSREL --threads=2 --handles=64
+#### CMD
+```bat
+Sophon.Downloader.exe full hk4e game 6.5 Downloads\GenshinImpact_6.5.0
+Sophon.Downloader.exe update hk4e zh-cn 6.4 6.5 Downloads\audio_zh-cn_6.4.0_6.5.0 --main --CNREL --threads=8 --handles=128
+```
+
+#### PowerShell
+```powershell
+./Sophon.Downloader.exe full hk4e game 6.5 Downloads\Yuanshen_6.5.0 --main --CNREL
+./Sophon.Downloader.exe update hk4e game 6.5 6.6 Downloads\game_6.5.0_6.6.0 --predownload --CNREL
 ```
 
 
@@ -76,9 +84,6 @@ Sophon.Downloader.exe update gopR6Cufr3 en-us 6.4 6.5 Downloads --predownload --
 | `--handles=...`    | Max HTTP handles (default 128)              |
 | `--silent`         | Disable all console output except errors    |
 | `-h`, `--help`     | Show help info                              |
-
-> If your input is garbage, it will fall back to defaults silently.  
-> You were warned.
 
 
 ## config.json
@@ -111,13 +116,29 @@ Example:
 
 ```
 
+## Download Speed Optimization
+
+Download speed depends on both the downloader configuration and the user's network quality.
+
+If you experience slow speeds, try reducing parallel connections:
+
+```json
+"Threads": 2,
+"MaxHttpHandle": 8
+```
+
+Lower values often provide more stable performance, especially on unstable or high-latency networks.
+
+For detailed explanation and advanced tuning, see:  
+👉 [Download Speed Optimization Guide](docs/download-speed-optimization.md)
+
 
 ## Notes
 
-- If you mess up the config, the app will silently fallback to default values.
-- Garbage values like `"Silent": lmao` or `"Threads": 99999` **Silently fixed automatically.**
+- Invalid config values automatically fallback to safe defaults.
+- Incorrect types or excessive values are silently corrected automatically.
 - Version/tag values are validated **live via the API**, not by regex.
-  If your version doesn't exist, you'll get a clean `[ERROR] Failed to fetch manifest` — no crash.
+- If your version doesn't exist, you'll get a clean `[ERROR] Failed to fetch manifest` — no crash.
 - Maximum thread count = your CPU core count.
 
 
@@ -131,5 +152,5 @@ Do not use this project for public distribution or commercial purposes.
 ## Credits
 
 This project is based on [SophonDownloader](https://github.com/Escartem/SophonDownloader)  
-This project also includes plugins and assets from [Hi3Helper.Sophon](https://github.com/CollapseLauncher/Hi3Helper.Sophon)  
-Major modifications and development by [GesthosNetwork](https://github.com/GesthosNetwork)
+This project also includes compiled libraries and assets derived from [Hi3Helper.Sophon](https://github.com/CollapseLauncher/Hi3Helper.Sophon)  
+Major fixes, modifications, and continued development were carried out by [GesthosNetwork](https://github.com/GesthosNetwork)  

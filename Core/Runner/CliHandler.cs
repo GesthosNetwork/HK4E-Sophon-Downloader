@@ -135,8 +135,8 @@ namespace Core.Runner
                       Sophon.Downloader.exe update <gameId> <package> <fromVer> <toVer> <outputDir> [options]
 
                     Example:
-                      Sophon.Downloader.exe full gopR6Cufr3 game 5.8 Downloads
-                      Sophon.Downloader.exe update gopR6Cufr3 en-us 5.8 6.0 Downloads --predownload --OSREL --threads=2 --handles=64
+                      Sophon.Downloader.exe full hk4e game 6.5 Downloads
+                      Sophon.Downloader.exe update hk4e en-us 6.5 6.6 Downloads --predownload --OSREL --threads=4 --handles=32
                 """);
                 return 0;
             }

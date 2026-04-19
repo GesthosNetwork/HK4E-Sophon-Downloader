@@ -15,7 +15,7 @@ namespace Core
         public string PlatApp { get; set; } = "ddxf6vlr1reo";
         public string Password { get; set; } = "bDL4JUHL625x";
         public int Threads { get; set; } = Math.Max(1, Environment.ProcessorCount / 2);
-        public int MaxHttpHandle { get; set; } = 128;
+        public int MaxHttpHandle { get; set; } = 32;
         public bool Silent { get; set; } = false;
         public VersionsConfig Versions { get; set; } = new();
 

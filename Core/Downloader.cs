@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -8,163 +7,195 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core.Utils;
 using Sophon;
-using Sophon.Structs;
 
 namespace Core
 {
     internal class Downloader
     {
-        private static string _statusMessage = string.Empty;
-        private static bool _isRetry = true;
-
+        private static string _statusMessage = "Downloading...";
         private static int _lastLineLength = 0;
 
         public static async Task<int> StartDownload(string prevManifestUrl, string newManifestUrl, string outputDir, string matchingField)
         {
-        StartDownload:
+            bool isFirstRun = true;
 
-            _isRetry = false;
-            _statusMessage = "Downloading...";
-            _lastLineLength = 0;
+            using var httpCheckClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
 
-            CancellationTokenSource tokenSource = new();
-            HttpClientHandler httpHandler = new() { MaxConnectionsPerServer = AppConfig.Config.MaxHttpHandle };
-            HttpClient httpClient = new(httpHandler)
+            async Task<bool> HasInternet()
             {
-                DefaultRequestVersion = HttpVersion.Version30,
-                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower,
-            };
+                try
+                {
+                    using var res = await httpCheckClient.GetAsync("https://example.com");
+                    return res.IsSuccessStatusCode;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
 
-            using (tokenSource)
-            using (httpHandler)
-            using (httpClient)
+            async Task WaitInternet(Action<string> write)
             {
-                if (!Directory.Exists(outputDir))
-                    Directory.CreateDirectory(outputDir);
+                while (!await HasInternet())
+                {
+                    write("[ERROR] Waiting for internet connection...");
+                    await Task.Delay(1000);
+                }
+            }
+
+            while (true)
+            {
+                using var tokenSource = new CancellationTokenSource();
+                using var httpHandler = new HttpClientHandler { MaxConnectionsPerServer = AppConfig.Config.MaxHttpHandle };
+                using var httpClient = new HttpClient(httpHandler)
+                {
+                    DefaultRequestVersion = HttpVersion.Version30,
+                    DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower
+                };
+
+                Directory.CreateDirectory(outputDir);
 
                 if (!AppConfig.Config.Silent)
                     Console.WriteLine("Fetching assets...");
 
-                var result = await Assets.GetAssetsFromManifests(
-                    httpClient,
-                    matchingField,
-                    prevManifestUrl,
-                    newManifestUrl,
-                    tokenSource
-                );
+                var result = await Assets.GetAssetsFromManifests(httpClient, matchingField, prevManifestUrl, newManifestUrl, tokenSource);
 
                 if (result?.Item1 == null)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("[ERROR] Failed to fetch manifest. Please check if the version or parameters are valid.");
-                    Console.ResetColor();
-                    return 1;
-                }
+                    return Error("Failed to fetch manifest.");
 
-                var sophonAssets = result.Item1;
-                long updateSize = result.Item2;
-
-                int totalCount = sophonAssets.Count;
-                int completedCount = 0;
-
-                string totalSizeUnit = Formatter.FormatSize(updateSize);
-
-                if (!AppConfig.Config.Silent)
-                {
-                    Console.WriteLine($"* Found {totalCount} assets");
-                    Console.WriteLine($"* Total download size is {totalSizeUnit}");
-
-                    Console.Write("Continue? (y/n): ");
-                    var input = Console.ReadLine()?.Trim().ToLower();
-                    if (input != "y" && input != "yes")
-                    {
-                        Console.WriteLine("Aborting...");
-                        return 0;
-                    }
-                }
-
+                var assets = result.Item1;
+                int total = assets.Count, done = 0;
                 long currentRead = 0;
-                var stopwatch = Stopwatch.StartNew();
-                bool completedSuccessfully = false;
+
+                if (!AppConfig.Config.Silent && isFirstRun)
+                {
+                    Console.WriteLine($"* Found {total} assets");
+                    Console.WriteLine($"* Total download size is {Formatter.FormatSize(result.Item2)}");
+                    Console.Write("Continue? (yes/no): ");
+                    var input = Console.ReadLine()?.Trim().ToLower();
+                    if (input != "y" && input != "yes") return 0;
+                    isFirstRun = false;
+                }
+
+                var sw = Stopwatch.StartNew();
+
+                void WriteLineOverwrite(string text)
+                {
+                    if (AppConfig.Config.Silent) return;
+                    int pad = Math.Max(0, _lastLineLength - text.Length);
+                    Console.Write(text + new string(' ', pad) + "\r");
+                    _lastLineLength = text.Length;
+                }
+
+                void Render()
+                {
+                    double sec = Math.Max(1, sw.Elapsed.TotalSeconds);
+                    WriteLineOverwrite($"{_statusMessage} | {done}/{total} files ({Formatter.FormatSize(currentRead / sec)}/s)");
+                }
 
                 try
                 {
-                    foreach (var asset in sophonAssets)
+                    foreach (var asset in assets)
                     {
-                        string outputPath = Path.Combine(outputDir, asset.AssetName);
+                        string path = Path.Combine(outputDir, asset.AssetName);
 
-                        if (File.Exists(outputPath))
+                        if (File.Exists(path))
                         {
-                            completedCount++;
+                            done++;
                             continue;
                         }
 
-                        await asset.WriteUpdateAsync(
-                            httpClient,
-                            outputDir,
-                            outputDir,
-                            outputDir,
-                            false,
-                            read =>
-                            {
-                                Interlocked.Add(ref currentRead, read);
+                        int retry = 0;
 
-                                double seconds = stopwatch.Elapsed.TotalSeconds;
-                                if (seconds <= 0) seconds = 1;
-
-                                string speedUnit = Formatter.FormatSize(currentRead / seconds);
-
-                                if (!AppConfig.Config.Silent)
-                                {
-                                    string line = $"{_statusMessage} | {completedCount}/{totalCount} files ({speedUnit}/s)";
-                                    int padding = Math.Max(0, _lastLineLength - line.Length);
-
-                                    Console.Write(line + new string(' ', padding) + "\r");
-                                    _lastLineLength = line.Length;
-                                }
-                            },
-                            null, null,
-                            tokenSource.Token
-                        );
-
-                        string outputTempPath = outputPath + "_tempUpdate";
-
-                        if (File.Exists(outputTempPath))
+                    RETRY:
+                        try
                         {
-                            File.Move(outputTempPath, outputPath, true);
+                            await asset.WriteUpdateAsync(
+                                httpClient, outputDir, outputDir, outputDir,
+                                false,
+                                read =>
+                                {
+                                    Interlocked.Add(ref currentRead, read);
+                                    Render();
+                                },
+                                null, null,
+                                tokenSource.Token
+                            );
+                        }
+                        catch (Exception ex) when (
+                            ex is HttpRequestException ||
+                            ex is TaskCanceledException ||
+                            ex is IOException)
+                        {
+                            await WaitInternet(msg =>
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                WriteLineOverwrite(msg);
+                                Console.ResetColor();
+                            });
+
+                            retry++;
+
+                            if (!AppConfig.Config.Silent)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                WriteLineOverwrite($"[ERROR] Network issue, retrying... ({retry})");
+                                Console.ResetColor();
+                            }
+
+                            string temp = path + "_tempUpdate";
+                            try { if (File.Exists(temp)) File.Delete(temp); }
+                            catch { await Task.Delay(1000); }
+
+                            await Task.Delay(300);
+                            goto RETRY;
                         }
 
-                        completedCount++;
-                    }
+                        string tempPath = path + "_tempUpdate";
+                        if (File.Exists(tempPath))
+                            File.Move(tempPath, path, true);
 
-                    completedSuccessfully = true;
-                }
-                catch (OperationCanceledException)
-                {
-                    if (!AppConfig.Config.Silent)
-                        Console.WriteLine("\nCancelled!");
-                }
-                finally
-                {
-                    stopwatch.Stop();
+                        done++;
+                        Render();
+                    }
 
                     if (!AppConfig.Config.Silent)
                     {
+                        WriteLineOverwrite($"{_statusMessage} | {total}/{total} files");
                         Console.WriteLine();
+                        Console.WriteLine("Download completed.");
+                        Console.WriteLine($"Elapsed time: {sw.Elapsed:hh\\:mm\\:ss}");
 
-                        if (completedSuccessfully)
-                        {
-                            Console.WriteLine("Download completed.");
-                            Console.WriteLine($"Elapsed time: {stopwatch.Elapsed:hh\\:mm\\:ss}");
-                        }
+                        while (Console.KeyAvailable)
+                            Console.ReadKey(true);
+
+                        Console.ReadKey(true);
                     }
+
+                    return 0;
+                }
+                catch (OperationCanceledException)
+                {
+                    return Error("Cancelled!");
+                }
+                catch (Exception ex)
+                {
+                    return Error(ex.Message);
                 }
             }
+        }
 
-            if (_isRetry)
-                goto StartDownload;
-
-            return 0;
+        private static int Error(string msg)
+        {
+            if (!AppConfig.Config.Silent)
+            {
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"[ERROR] {msg}");
+                Console.ResetColor();
+                Console.ReadKey(true);
+            }
+            return 1;
         }
     }
 }

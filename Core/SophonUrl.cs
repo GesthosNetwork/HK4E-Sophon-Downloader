@@ -49,133 +49,105 @@ namespace Core
         public string? matching_field { get; set; }
     }
 
-    public enum Region
-    {
-        OSREL,
-        CNREL
-    }
-
-    public enum BranchType
-    {
-        Main,
-        PreDownload
-    }
+    public enum Region { OSREL, CNREL }
+    public enum BranchType { Main, PreDownload }
 
     public class SophonUrl
     {
-        private string apiBase { get; set; } = "";
-        private string sophonBase { get; set; } = "";
-        private string gameId { get; set; } = "";
-        private BranchType branch { get; set; }
-        private string launcherId { get; set; } = "";
-        private string platApp { get; set; } = "";
-        private string gameBiz { get; set; } = "";
-        private string packageId { get; set; } = "";
-        private string password { get; set; } = "";
-        private BranchesRoot branchBackup { get; set; } = new BranchesRoot();
+        private string apiBase = "", sophonBase = "", gameId = "", launcherId = "", platApp = "";
+        private string gameBiz = "", packageId = "", password = "";
+        private BranchType branch;
+        private BranchesRoot branchBackup = new();
 
         public SophonUrl(Region region, string gameId, BranchType branch = BranchType.Main, string launcherIdOverride = "", string platAppOverride = "")
         {
             UpdateRegion(region);
             this.gameId = gameId;
             this.branch = branch;
-            this.launcherId = !string.IsNullOrEmpty(launcherIdOverride) ? launcherIdOverride : AppConfig.Config.LauncherId;
-            this.platApp = !string.IsNullOrEmpty(platAppOverride) ? platAppOverride : AppConfig.Config.PlatApp;
+            launcherId = string.IsNullOrEmpty(launcherIdOverride) ? AppConfig.Config.LauncherId : launcherIdOverride;
+            platApp = string.IsNullOrEmpty(platAppOverride) ? AppConfig.Config.PlatApp : platAppOverride;
         }
 
-        public void UpdateRegion(Region region)
-        {
-            switch (region)
+        public void UpdateRegion(Region region) =>
+            (apiBase, sophonBase) = region switch
             {
-                case Region.OSREL:
-                    apiBase = "https://sg-hyp-api.hoyoverse.com/hyp/hyp-connect/api/getGameBranches";
-                    sophonBase = "https://sg-public-api.hoyoverse.com:443/downloader/sophon_chunk/api/getBuild";
-                    break;
-                case Region.CNREL:
-                    apiBase = "https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGameBranches";
-                    sophonBase = "https://api-takumi.mihoyo.com/downloader/sophon_chunk/api/getBuild";
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(region), region, null);
-            }
-        }
+                Region.OSREL => (
+                    "https://sg-hyp-api.hoyoverse.com/hyp/hyp-connect/api/getGameBranches",
+                    "https://sg-public-api.hoyoverse.com:443/downloader/sophon_chunk/api/getBuild"
+                ),
+                Region.CNREL => (
+                    "https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGameBranches",
+                    "https://api-takumi.mihoyo.com/downloader/sophon_chunk/api/getBuild"
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(region))
+            };
 
         public async Task<int> GetBuildData()
         {
             var uri = new UriBuilder(apiBase);
-            var query = HttpUtility.ParseQueryString(uri.Query);
+            var q = HttpUtility.ParseQueryString(uri.Query);
 
-            query["game_ids[]"] = gameId;
-            query["launcher_id"] = launcherId;
-            uri.Query = query.ToString();
+            q["game_ids[]"] = gameId;
+            q["launcher_id"] = launcherId;
+            uri.Query = q.ToString();
 
-            string json = await FetchUrl(uri.ToString());
-            var obj = JsonSerializer.Deserialize<BranchesRoot>(json);
+            var obj = JsonSerializer.Deserialize<BranchesRoot>(await FetchUrl(uri.ToString()));
+            var (ok, biz, pkg, pass, err) = ParseBuildData(obj, branch);
 
-            string[] data = ParseBuildData(obj, branch);
-
-            if (data[0] != "OK")
+            if (!ok)
             {
                 if (branch == BranchType.PreDownload)
-                {
-                    packageId = "ScSYQBFhu9";
-                    password = "ZOJpUiKu4Sme";
-                    branchBackup = new BranchesRoot();
-                    return 0;
-                }
+                    (packageId, password) = ("ScSYQBFhu9", "ZOJpUiKu4Sme");
                 else if (branch == BranchType.Main)
-                {
-                    packageId = "ScSYQBFhu9";
-                    password = "bDL4JUHL625x";
-                    branchBackup = new BranchesRoot();
-                    return 0;
-                }
+                    (packageId, password) = ("ScSYQBFhu9", "bDL4JUHL625x");
                 else
                 {
-                    Console.WriteLine($"Error: {data[1]}");
+                    Console.WriteLine($"Error: {err}");
                     return -1;
                 }
+
+                branchBackup = new();
+                return 0;
             }
 
-            gameBiz = data[1];
-            packageId = string.IsNullOrEmpty(data[2])
-                ? (branch == BranchType.PreDownload ? "ScSYQBFhu9" : "ScSYQBFhu9")
-                : data[2];
-            password = string.IsNullOrEmpty(data[3])
+            gameBiz = biz;
+            packageId = string.IsNullOrEmpty(pkg) ? "ScSYQBFhu9" : pkg;
+            password = string.IsNullOrEmpty(pass)
                 ? (branch == BranchType.PreDownload ? "ZOJpUiKu4Sme" : "bDL4JUHL625x")
-                : data[3];
+                : pass;
 
             branchBackup = obj!;
             return 0;
         }
 
-        private string[] ParseBuildData(BranchesRoot? obj, BranchType searchBranch)
+        private static (bool ok, string biz, string pkg, string pass, string err)
+            ParseBuildData(BranchesRoot? obj, BranchType type)
         {
-            if (obj == null || obj.retcode != 0 || obj.message != "OK")
-                return new[] { "ERROR", obj?.message ?? "Unknown error" };
+            if (obj?.retcode != 0 || obj.message != "OK")
+                return (false, "", "", "", obj?.message ?? "Unknown error");
 
-            var branchObj = GetBranch(obj, searchBranch);
-            if (branchObj == null)
-                return new[] { "ERROR", $"Branch {searchBranch} not found" };
+            var branch = GetBranch(obj, type);
+            if (branch == null)
+                return (false, "", "", "", $"Branch {type} not found");
 
-            var gameObj = GetBranchGame(obj);
-            return new[] { "OK", gameObj?.biz ?? "", branchObj.package_id ?? "", branchObj.password ?? "" };
+            var game = obj.data?.game_branches?.FirstOrDefault()?.game;
+            return (true, game?.biz ?? "", branch.package_id ?? "", branch.password ?? "", "");
         }
 
         public string GetBuildUrl(string version, bool isUpdate = false)
         {
             var uri = new UriBuilder(sophonBase);
-            var query = HttpUtility.ParseQueryString(uri.Query);
+            var q = HttpUtility.ParseQueryString(uri.Query);
 
-            query["branch"] = branch.ToString().ToLower();
-            query["package_id"] = packageId;
-            query["password"] = password;
-            query["plat_app"] = platApp;
+            q["branch"] = branch.ToString().ToLower();
+            q["package_id"] = packageId;
+            q["password"] = password;
+            q["plat_app"] = platApp;
 
             if (branch != BranchType.PreDownload)
-                query["tag"] = version;
+                q["tag"] = version;
 
-            uri.Query = query.ToString();
+            uri.Query = q.ToString();
             return uri.ToString();
         }
 
@@ -185,20 +157,10 @@ namespace Core
             return await client.GetStringAsync(url);
         }
 
-        private static BranchesGame? GetBranchGame(BranchesRoot obj)
+        private static BranchesMain? GetBranch(BranchesRoot obj, BranchType type)
         {
-            return obj.data?.game_branches?.FirstOrDefault()?.game;
-        }
-
-        private static BranchesMain? GetBranch(BranchesRoot obj, BranchType searchBranch)
-        {
-            var branchObj = obj.data?.game_branches?.FirstOrDefault();
-            return searchBranch switch
-            {
-                BranchType.Main => branchObj?.main,
-                BranchType.PreDownload => branchObj?.pre_download,
-                _ => null
-            };
+            var b = obj.data?.game_branches?.FirstOrDefault();
+            return type == BranchType.Main ? b?.main : b?.pre_download;
         }
     }
 }
